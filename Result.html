@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cancer Prediction Result</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+/* Reset and Base Styles */
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins', sans-serif; }
+/* ADDED 3D PROPERTIES TO HTML/BODY FOR STRONG PERSPECTIVE */
+html, body { 
+    height:100%; 
+    width:100%; 
+    overflow:hidden; 
+    background: #fdf6ec; 
+    perspective: 1200px; /* Stronger 3D depth */
+    transform-style: preserve-3d;
+} 
+
+/* 3D Background Shapes */
+.background-shapes {
+  position:fixed; top:0; left:0; width:100%; height:100%; z-index:-1;
+  overflow:hidden; 
+  /* Removing perspective here as it is now on <html> */
+}
+.shape {
+  position:absolute; border-radius:50%; 
+  animation:floating 25s linear infinite; /* Increased duration for smoother look */
+  transform-style: preserve-3d; /* Ensures the rotation works correctly */
+}
+.shape.negative { background: rgba(204, 0, 82, 0.2); }
+.shape.positive { background: rgba(9, 132, 227, 0.2); }
+@keyframes floating {
+  0% { transform: translate3d(-100px, 100px, -500px) rotateY(0deg) scale(1); } /* Start position, slightly back in Z-axis */
+  50% { transform: translate3d(500px, -300px, 500px) rotateY(180deg) scale(1.2); } /* Mid position, slightly forward */
+  100% { transform: translate3d(-100px, 100px, -500px) rotateY(360deg) scale(1); } /* End position, back to start */
+}
+
+/* Card Container */
+body { display:flex; justify-content:center; align-items:center; }
+.card-container {
+  display: flex;
+  width: 90%;
+  max-width: 1000px;
+  height: 90vh;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25); /* Darker shadow to lift the card */
+  border-radius: 2rem;
+  overflow: hidden;
+  z-index: 10;
+  transform: translateZ(100px); /* Lifts the card slightly forward in 3D space */
+}
+
+/* Left Panel: Main Result (Gradient Section) */
+.left-panel {
+  flex: 0 0 40%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+  padding: 2.5rem 1.5rem;
+  color: #fff;
+  /* Dynamic Gradient based on result */
+  background: linear-gradient(135deg,
+    {% if 'Malignant' in label %}
+      #cc0052, #990033 /* Positive Diagnosis (Red/Pink) */
+    {% else %}
+      #28ed12ff, #09f111ff /* Negative Diagnosis (Blue/Purple) */
+    {% endif %}
+  );
+  text-align: center;
+}
+.left-panel .header { font-size: 1.1rem; font-weight: 600; opacity: 0.8; margin-bottom: 0.5rem; }
+
+/* Circular Confidence Display */
+.circular {
+    position: relative;
+    width: 15rem; 
+    height: 15rem; 
+    margin: 1.5rem auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.circular svg { position: absolute; top: 0; left: 0; transform: rotate(-90deg); width: 100%; height: 100%; }
+.circular circle { fill: none; stroke-width: 1rem; stroke-linecap: round; }
+.circular .bg { stroke: rgba(255, 255, 255, 0.3); }
+.circular .progress {
+    stroke: #ffdd59; 
+    stroke-dasharray: 471; 
+    stroke-dashoffset: 471;
+    transition: stroke-dashoffset 1s ease;
+}
+.circular-value {
+    z-index: 10;
+    font-size: 4.5rem; 
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+}
+.circular-label {
+    z-index: 10;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-top: -0.5rem;
+    color: #fff;
+    opacity: 0.9;
+}
+
+/* Right Panel: Guidance & Next Steps (White Section) */
+.right-panel {
+  flex: 1;
+  background: #fff;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+}
+.right-panel h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 1.5rem;
+}
+
+/* Recovery Instructions */
+.instructions-list {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
+    color: #555;
+    line-height: 1.6;
+    max-height: unset;
+    overflow-y: hidden;
+}
+.instructions-list li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+    list-style-type: '• '; 
+    padding-left: 1.2rem;
+}
+.instructions-list li:last-child {
+    border-bottom: none;
+}
+
+/* Continue Button */
+a.continue-btn {
+  display: block;
+  width: 100%;
+  text-decoration: none;
+  padding: 0.8rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  margin-top: auto;
+  color: #fff;
+  background: #463b7c;
+  transition: background 0.3s ease;
+}
+a.continue-btn:hover { background: #5d5099; }
+</style>
+</head>
+<body>
+
+<div class="background-shapes">
+  {% for i in range(25) %}
+    <div class="shape {% if 'Malignant' in label %}negative{% else %}positive{% endif %}" style="top:{{ (loop.index*4)%100 }}%; left:{{ (loop.index*7)%100 }}%; width:{{ 20 + (loop.index*3)%50 }}px; height:{{ 20 + (loop.index*3)%50 }}px; animation-delay:{{ loop.index*0.5 }}s;"></div>
+  {% endfor %}
+</div>
+
+<div class="card-container">
+
+    <div class="left-panel">
+        {% if error %}
+            <div class="header">ERROR</div>
+            <div class="circular" style="height: 10rem; width: 10rem;">
+                <div class="circular-value" style="font-size: 3rem;">N/A</div>
+                <div class="circular-label">Error</div>
+            </div>
+            <p style="font-size: 1rem; padding: 0 1rem;">{{ error }}</p>
+        {% else %}
+            <div class="header">Your Prediction Confidence</div>
+
+            <div class="circular">
+                <svg viewBox="0 0 200 200">
+                    <circle class="bg" cx="100" cy="100" r="75"></circle>
+                    <circle class="progress" cx="100" cy="100" r="75" style="stroke-dashoffset: {{ 471 - (confidence/100)*471 }};"></circle>
+                </svg>
+                <div class="circular-value">{{ confidence }}</div>
+                <div class="circular-label">/ 100</div>
+            </div>
+
+            <div class="header" style="font-size: 1.8rem; font-weight: 700;">
+                {% if 'Malignant' in label %}
+                    Positive Diagnosis ⚠️
+                {% else %}
+                    Negative Diagnosis ✅
+                {% endif %}
+            </div>
+
+            <p style="font-size: 0.9rem; opacity: 0.9;">
+                {% if 'Malignant' in label %}
+                    **Positive Diagnosis:** The model strongly suggests a high probability of malignancy. Consult your specialist immediately.
+                {% else %}
+                    **Negative Diagnosis:** The model indicates a low probability of malignancy. Continue with regular screening and a healthy lifestyle.
+                {% endif %}
+            </p>
+        {% endif %}
+    </div>
+
+    <div class="right-panel">
+        <h2>Guidance & Next Steps</h2>
+
+        {% if 'Malignant' in label %}
+            <div style="flex: 1; display: flex; flex-direction: column;">
+                <h3 style="font-size: 1.2rem; color: #6c5ce7; margin-bottom: 0.8rem;">Recovery Steps</h3>
+                <ul class="instructions-list">
+                    <li>Consult an oncologist immediately for next steps.</li>
+                    <li>Prioritize following the prescribed treatment plan completely.</li>
+                    <li>Maintain a nutrient-rich, balanced diet.</li>
+                    <li>Engage in light, regular exercise as advised by your doctor.</li>
+                    <li>Schedule follow-up appointments and monitoring scans regularly.</li>
+                    <li>Seek mental health support or counseling as needed.</li>
+                    <li>Keep lines of communication open with family and care team.</li>
+                </ul>
+            </div>
+        {% else %}
+            <div style="font-size: 1.1rem; color: #555; line-height: 1.8; flex: 1;">
+                <p>The prediction indicates a **low probability** of malignancy based on your submitted features.</p>
+                <p style="margin-top: 1rem;">To maintain this result:</p>
+                <ul style="list-style-type: '🌿 '; margin-left: 1.5rem;">
+                    <li>Continue with annual check-ups.</li>
+                    <li>Maintain a healthy weight and balanced diet.</li>
+                    <li>Perform self-examinations regularly.</li>
+                </ul>
+            </div>
+        {% endif %}
+
+        <a href="/" class="continue-btn">🔙 Back to Prediction Tool</a>
+
+    </div>
+</div>
+
+</body>
+</html>
