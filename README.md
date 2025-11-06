@@ -118,3 +118,7 @@ Create visual graphs for predictions
 Uttam Akash
 
 <img width="1919" height="918" alt="Screenshot 2025-11-07 014538" src="https://github.com/user-attachments/assets/8557ef5d-6cfb-4b2f-9d3a-1602ee67c57d" />
+<img width="1919" height="917" alt="Screenshot 2025-11-07 014607" src="https://github.com/user-attachments/assets/6b8b6d3b-10ef-4f05-bf36-eb2e1adebf2b" />
+<img width="1919" height="925" alt="Screenshot 2025-11-07 014632" src="https://github.com/user-attachments/assets/6d417db5-0d40-4e00-b5a7-09e2ffa57088" />
+
+
